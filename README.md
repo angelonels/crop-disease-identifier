@@ -102,11 +102,11 @@ We chose this PlantVillage Dataset because it's an free access kaggle dataset of
 
 ## 8. Technology Stack
 
-### Frontend
-### Backend
-### ML/AI
-### Database
-### Deployment
+### Frontend: React,Typescript
+### Backend: Nodejs,Express
+### ML/AI: Tensorflow
+### Database: SQLite
+### Deployment: Electron
 
 ---
 
