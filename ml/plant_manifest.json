@@ -1,0 +1,41 @@
+{
+    "pepper__bell": {
+        "bacterial_spot": 0,
+        "healthy": 1
+    },
+    "potato": {
+        "early_blight": 2,
+        "late_blight": 3,
+        "healthy": 4
+    },
+    "tomato_bacterial_spot": {
+        "unknown": 5
+    },
+    "tomato_early_blight": {
+        "unknown": 6
+    },
+    "tomato_late_blight": {
+        "unknown": 7
+    },
+    "tomato_leaf_mold": {
+        "unknown": 8
+    },
+    "tomato_septoria_leaf_spot": {
+        "unknown": 9
+    },
+    "tomato_spider_mites_two_spotted_spider_mite": {
+        "unknown": 10
+    },
+    "tomato__target_spot": {
+        "unknown": 11
+    },
+    "tomato__tomato_yellowleaf__curl_virus": {
+        "unknown": 12
+    },
+    "tomato__tomato_mosaic_virus": {
+        "unknown": 13
+    },
+    "tomato_healthy": {
+        "unknown": 14
+    }
+}
