@@ -168,16 +168,16 @@ Segmentation: Mean Intersection over Union (mIoU), Dice Coefficient.
 
 ## 11. End-to-End Workflow
 
-1.Farmer launches the application on a desktop computer.
-2.On the home screen, they are prompted to select their plant type (e.g., Tomato)..
-3.The farmer captures or uploads a leaf photograph.
-4.The backend main process immediately converts the image and runs the blur-detection filter. If the image is blurry, it is immediately rejected, and the user is prompted to retake it..
-5.If passed, the image tensor is routed through the Swin Transformer V2 model for high-accuracy disease identification.
-6.Simultaneously, the image is passed to the U-Net model to create a diseased pixel mask.
-7.The main process averages model predictions (via TTA) for classification stability and calculates the exact severity percentage.
-8.The main process queries the local SQLite database for symptoms, symptoms summary, and control strategies.
-9.The finalized, structured report, combining the diagnosis, severity estimate, and actionable treatment steps, is rendered to the farmer's screen.
-10.The farmer can then save the diagnosis locally or export it as a PDF for future reference.
+1. Farmer launches the application on a desktop computer.
+2. On the home screen, they are prompted to select their plant type (e.g., Tomato)..
+3. The farmer captures or uploads a leaf photograph.
+4. The backend main process immediately converts the image and runs the blur-detection filter. If the image is blurry, it is immediately rejected, and the user is prompted to retake it..
+5. If passed, the image tensor is routed through the Swin Transformer V2 model for high-accuracy disease identification.
+6. Simultaneously, the image is passed to the U-Net model to create a diseased pixel mask.
+7. The main process averages model predictions (via TTA) for classification stability and calculates the exact severity percentage.
+8. The main process queries the local SQLite database for symptoms, symptoms summary, and control strategies.
+9. The finalized, structured report, combining the diagnosis, severity estimate, and actionable treatment steps, is rendered to the farmer's screen.
+10. The farmer can then save the diagnosis locally or export it as a PDF for future reference.
 
 ---
 
