@@ -7,7 +7,7 @@ Instant, offline crop disease diagnosis and severity estimation using on-device 
 ## 1. Problem Statement
 
 ### Problem Title
-### Crop Disease Identifier from Leaf Images
+## Crop Disease Identifier from Leaf Images
 
 ### Problem Description
 Crop diseases cause significant reductions in agricultural productivity and farmer income. While early detection is critical to preventing large-scale damage, farmers currently lack accessible, offline, and real-time diagnostic tools. This project aims to build an on-device, camera-based machine learning system that operates fully offline to identify crop diseases from leaf photographs, estimate severity levels, and provide actionable treatment recommendations directly at the point of need.
@@ -44,9 +44,10 @@ An Electron-based desktop application providing an automated, offline pipeline f
 ## 4. System Architecture
 
 ### High-Level Flow
-User → Frontend → Backend → Model → Database → Response
+User $\rightarrow$ Frontend GUI (React) $\rightarrow$ Image Pre-filtering (Laplacian Variance Check in Main Process) $\rightarrow$ AI Models (Local ONNX Runtime Engine) $\rightarrow$ Model Aggregation (Classification + Severity %) $\rightarrow$ Database Lookup (SQLite) $\rightarrow$ Formatted Response on UI.
 
 ### Architecture Description
+The application uses an Electron-based architecture that cleanly separates the responsive user interface (Frontend Renderer process) from the intense computational load and hardware binding (Backend Main process).
 
 ### Architecture Diagram
 (Add system architecture diagram image here)
