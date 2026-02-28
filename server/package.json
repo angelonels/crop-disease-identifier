@@ -1,10 +1,12 @@
 {
-  "name": "server",
+  "name": "crop-disease-identifier-electron-server",
   "version": "1.0.0",
-  "main": "dist/main.js",
+  "private": true,
+  "main": "src/main.js",
   "scripts": {
-    "build": "tsc",
-    "start": "tsc && electron ."
+    "start": "electron .",
+    "build": "echo \"Server build skipped/done\"",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
