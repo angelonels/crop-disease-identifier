@@ -61,11 +61,11 @@ User → Frontend → Backend → Model → Database → Response
 
 ## 6. Dataset Selected
 
-### Dataset Name
-### Source
-### Data Type
-### Selection Reason
-### Preprocessing Steps
+### Dataset Name: PlantVillage Dataset
+### Source: https://www.kaggle.com/datasets/emmarex/plantdisease
+### Data Type: 
+### Selection Reason: Large dataset with diverse crop diseases
+### Preprocessing Steps: 
 
 ---
 
