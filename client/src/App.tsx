@@ -1,35 +1,174 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { InputView } from './views/InputView';
+import { ProcessingView } from './views/ProcessingView';
+import { ResultsView } from './views/ResultsView';
+import { DashboardView } from './views/DashboardView';
+import { HistoryView } from './views/HistoryView';
+import { SpeciesLibraryView } from './views/SpeciesLibraryView';
+import { Toast } from './components/Toast';
+import { AuthModal } from './components/AuthModal';
+import { SettingsModal } from './components/SettingsModal';
+import { analyzeImage } from './services/api';
+import type { ScanResult } from './services/api';
+
+type ViewState = 'input' | 'processing' | 'results' | 'dashboard' | 'history' | 'library';
 
 function App() {
-  const [count, setCount] = useState(0)
+  // Navigation State
+  const [view, setView] = useState<ViewState>('dashboard');
+
+  // Auth & Modal State
+  const [user, setUser] = useState<{ name: string, role: string } | null>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Toast State
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const triggerToast = (message: string) => setToastMessage(message);
+
+  // Diagnostic State
+  const [selectedCrop, setSelectedCrop] = useState<string>('tomato');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [scanStatus, setScanStatus] = useState<'idle' | 'processing' | 'complete'>('idle');
+  const [scanResults, setScanResults] = useState<ScanResult | null>(null);
+
+  const handleImageUpload = async (file: File) => {
+    setUploadedFile(file);
+    setScanStatus('processing');
+    setView('processing');
+
+    try {
+      // Simulate ONNX Inference
+      const result = await analyzeImage(file, selectedCrop);
+      setScanResults(result);
+      setScanStatus('complete');
+      setView('results');
+      triggerToast("Analysis complete. Results loaded successfully.");
+    } catch (error) {
+      console.error("Inference failed", error);
+      setScanStatus('idle');
+      setView('input');
+      triggerToast("Analysis failed. Please try again.");
+    }
+  };
+
+  const handleNavigate = (newView: string) => {
+    // Reset diagnostic state if leaving the diagnosis flow
+    if (newView !== 'input' && newView !== 'processing' && newView !== 'results') {
+      setUploadedFile(null);
+      setScanStatus('idle');
+      setScanResults(null);
+      // We'll keep selectedCrop as is
+    }
+
+    // If they click Diagnosis while a scan is complete, show them results again,
+    // or if idle show input.
+    if (newView === 'input') {
+      if (scanStatus === 'complete') {
+        setView('results');
+        return;
+      }
+      if (scanStatus === 'processing') {
+        setView('processing');
+        return;
+      }
+    }
+
+    setView(newView as ViewState);
+  };
+
+  const handleNewScan = () => {
+    setUploadedFile(null);
+    setScanResults(null);
+    setScanStatus('idle');
+    setView('input');
+  };
+
+  const handleStartSpecificScan = (crop: string) => {
+    setSelectedCrop(crop);
+    setUploadedFile(null);
+    setScanResults(null);
+    setScanStatus('idle');
+    setView('input');
+  };
+
+  const handleViewMockResult = (crop: string, diseaseName: string, severity: number) => {
+    const mockRes: ScanResult = {
+      id: "CHM-HISTORY",
+      diseaseName: diseaseName,
+      scientificName: crop === 'Tomato' ? 'Solanum lycopersicum' : crop === 'Potato' ? 'Solanum tuberosum' : 'Capsicum annuum',
+      severity: severity,
+      symptoms: ["Historical scan artifact"],
+      chemicalControl: ["Historical dataset record"],
+      organicControl: ["Historical dataset record"]
+    };
+    setSelectedCrop(crop.toLowerCase().replace(' ', ''));
+    setScanResults(mockRes);
+    setUploadedFile(new File([""], `historical_${crop.toLowerCase()}.jpg`, { type: "image/jpeg" }));
+    setScanStatus('complete');
+    setView('results');
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="flex h-screen w-screen overflow-hidden bg-gray-50 font-sans text-gray-900">
+      {/* Sidebar - Fixed Left */}
+      <Sidebar
+        currentView={view}
+        onNavigate={handleNavigate}
+        onNewScan={handleNewScan}
+        triggerToast={triggerToast}
+        user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {view === 'input' && (
+          <InputView
+            selectedSpecies={selectedCrop}
+            onSpeciesChange={setSelectedCrop}
+            onUpload={handleImageUpload}
+            triggerToast={triggerToast}
+          />
+        )}
+        {view === 'processing' && uploadedFile && (
+          <ProcessingView file={uploadedFile} triggerToast={triggerToast} />
+        )}
+        {view === 'results' && scanResults && uploadedFile && (
+          <ResultsView
+            result={scanResults}
+            file={uploadedFile}
+            cropType={selectedCrop}
+            onNewScan={handleNewScan}
+            triggerToast={triggerToast}
+          />
+        )}
+
+        {view === 'dashboard' && <DashboardView triggerToast={triggerToast} onNewScan={handleNewScan} onViewResult={handleViewMockResult} />}
+        {view === 'history' && <HistoryView triggerToast={triggerToast} onViewResult={handleViewMockResult} />}
+        {view === 'library' && <SpeciesLibraryView onStartScan={handleStartSpecificScan} />}
+
+      </main>
+
+      {isAuthOpen && (
+        <AuthModal
+          onClose={() => setIsAuthOpen(false)}
+          onLogin={(u) => { setUser(u); setIsAuthOpen(false); triggerToast("Successfully logged in."); }}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          onClose={() => setIsSettingsOpen(false)}
+          triggerToast={triggerToast}
+        />
+      )}
+
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+    </div>
+  );
 }
 
-export default App
+export default App;
