@@ -11,10 +11,10 @@ import {
     Sprout,
     Check
 } from 'lucide-react';
-import type { ScanResult } from '../services/api';
+import type { DiagnosisResult } from '../types';
 
 interface ResultsViewProps {
-    result: ScanResult;
+    result: DiagnosisResult;
     file: File;
     cropType: string;
     onNewScan: () => void;
@@ -116,15 +116,16 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ result, file, cropType
                         <div className="flex items-start justify-between mb-8">
                             <div>
                                 <div className="flex items-center gap-3 mb-3">
-                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider border ${result.severity >= 80 ? 'text-[#ef4444] bg-[#fef2f2] border-[#fecaca]' :
-                                        result.severity >= 50 ? 'text-[#f59e0b] bg-[#fffbeb] border-[#fde68a]' :
-                                            'text-[#10b981] bg-[#ecfdf5] border-[#a7f3d0]'
+                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider border ${result.isHealthy ? 'text-[#059669] bg-[#d1fae5] border-[#6ee7b7]' :
+                                            result.confidence >= 80 ? 'text-[#ef4444] bg-[#fef2f2] border-[#fecaca]' :
+                                                result.confidence >= 50 ? 'text-[#f59e0b] bg-[#fffbeb] border-[#fde68a]' :
+                                                    'text-[#10b981] bg-[#ecfdf5] border-[#a7f3d0]'
                                         }`}>
-                                        {result.severity >= 80 ? 'HIGH SEVERITY' : result.severity >= 50 ? 'MEDIUM SEVERITY' : 'LOW SEVERITY'}
+                                        {result.isHealthy ? 'HEALTHY' : result.confidence >= 80 ? 'HIGH SEVERITY' : result.confidence >= 50 ? 'MEDIUM SEVERITY' : 'LOW SEVERITY'}
                                     </span>
                                     <span className="text-xs text-gray-400 font-medium">ID: {result.id}</span>
                                 </div>
-                                <h2 className="text-[32px] font-black text-[#111827] leading-none mb-2">{result.diseaseName} Detected</h2>
+                                <h2 className="text-[32px] font-black text-[#111827] leading-none mb-2">{result.diseaseName} {result.isHealthy ? '' : 'Detected'}</h2>
                                 <p className="text-[15px] text-gray-500 font-medium tracking-wide">{result.scientificName}</p>
                             </div>
                             <button
@@ -137,122 +138,138 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ result, file, cropType
                         </div>
 
                         {/* Infection Severity */}
-                        <div className="bg-[#f8fafc] border border-[#f1f5f9] rounded-2xl p-6 shadow-sm">
-                            <p className="text-xs font-semibold text-gray-500 mb-1">Infection Severity</p>
+                        {!result.isHealthy && (
+                            <div className="bg-[#f8fafc] border border-[#f1f5f9] rounded-2xl p-6 shadow-sm">
+                                <p className="text-xs font-semibold text-gray-500 mb-1">Infection Confidence</p>
 
-                            <div className="flex items-end justify-between mb-4">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-[40px] font-black text-[#111827] leading-none tracking-tighter">{result.severity}%</span>
-                                    <span className={`text-sm font-bold ${result.severity >= 80 ? 'text-[#ef4444]' :
-                                        result.severity >= 50 ? 'text-[#f59e0b]' :
-                                            'text-[#10b981]'
-                                        }`}>
-                                        {result.severity >= 80 ? 'Critical Level' : result.severity >= 50 ? 'Warning Level' : 'Monitor Level'}
+                                <div className="flex items-end justify-between mb-4">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-[40px] font-black text-[#111827] leading-none tracking-tighter">{result.confidence}%</span>
+                                        <span className={`text-sm font-bold ${result.confidence >= 80 ? 'text-[#ef4444]' :
+                                            result.confidence >= 50 ? 'text-[#f59e0b]' :
+                                                'text-[#10b981]'
+                                            }`}>
+                                            {result.confidence >= 80 ? 'Critical Level' : result.confidence >= 50 ? 'Warning Level' : 'Monitor Level'}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-medium text-gray-500">
+                                        {result.confidence >= 80 ? 'Action required within 24h' : 'Schedule treatment soon'}
                                     </span>
                                 </div>
-                                <span className="text-xs font-medium text-gray-500">
-                                    {result.severity >= 80 ? 'Action required within 24h' : 'Schedule treatment soon'}
-                                </span>
-                            </div>
 
-                            {/* Progress Bar Container */}
-                            <div className="relative mb-2">
-                                <div className="h-3 w-full rounded-full bg-gradient-to-r from-[#10b981] via-[#f59e0b] to-[#ef4444] shadow-inner" />
-                                {/* Custom Marker */}
-                                <div
-                                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#111827] rounded-full shadow-md transition-all duration-1000"
-                                    style={{ left: `${result.severity}%`, transform: 'translate(-50%, -50%)' }}
-                                />
-                            </div>
-
-                            <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-widest uppercase">
-                                <span>Healthy</span>
-                                <span>Warning</span>
-                                <span>Critical</span>
-                            </div>
-                        </div>
-
-                        {/* Identified Symptoms */}
-                        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0">
-                                    <Search className="w-4 h-4 text-[#3b82f6]" strokeWidth={3} />
-                                </div>
-                                <h3 className="text-[17px] font-bold text-[#111827]">Identified Symptoms</h3>
-                            </div>
-
-                            <div className="flex gap-6 mb-5">
-                                <p className="text-[#4b5563] text-sm leading-relaxed flex-1">
-                                    Analysis indicates {result.symptoms.join(", ").toLowerCase()} based on visual indicators.
-                                </p>
-                                <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-sm">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1628155930542-3c7a64e2c886?q=80&w=400&auto=format&fit=crop"
-                                        alt="Microscopy preview"
-                                        className="w-full h-full object-cover opacity-80"
+                                {/* Progress Bar Container */}
+                                <div className="relative mb-2">
+                                    <div className="h-3 w-full rounded-full bg-gradient-to-r from-[#10b981] via-[#f59e0b] to-[#ef4444] shadow-inner" />
+                                    {/* Custom Marker */}
+                                    <div
+                                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#111827] rounded-full shadow-md transition-all duration-1000"
+                                        style={{ left: `${result.confidence}%`, transform: 'translate(-50%, -50%)' }}
                                     />
                                 </div>
-                            </div>
 
-                            <div className="flex gap-2 flex-wrap">
-                                {result.symptoms.map((sym, idx) => (
-                                    <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">{sym}</span>
-                                ))}
+                                <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                                    <span>Healthy</span>
+                                    <span>Warning</span>
+                                    <span>Critical</span>
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Identified Symptoms */}
+                        {!result.isHealthy && (
+                            <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0">
+                                        <Search className="w-4 h-4 text-[#3b82f6]" strokeWidth={3} />
+                                    </div>
+                                    <h3 className="text-[17px] font-bold text-[#111827]">Identified Symptoms</h3>
+                                </div>
+
+                                <div className="flex gap-6 mb-5">
+                                    <p className="text-[#4b5563] text-sm leading-relaxed flex-1">
+                                        Analysis indicates {result.symptoms.join(", ").toLowerCase()} based on visual indicators.
+                                    </p>
+                                    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-sm">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1628155930542-3c7a64e2c886?q=80&w=400&auto=format&fit=crop"
+                                            alt="Microscopy preview"
+                                            className="w-full h-full object-cover opacity-80"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 flex-wrap">
+                                    {result.symptoms.map((sym, idx) => (
+                                        <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">{sym}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Treatments Row */}
-                        <div className="grid grid-cols-2 gap-4 pt-2">
+                        {!result.isHealthy ? (
+                            <div className="grid grid-cols-2 gap-4 pt-2">
 
-                            {/* Chemical Control */}
-                            <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white flex flex-col hover:border-[#c084fc] hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="w-10 h-10 rounded-xl bg-[#f3e8ff] flex items-center justify-center shrink-0">
-                                        <FlaskConical className="w-5 h-5 text-[#9333ea]" />
+                                {/* Chemical Control */}
+                                <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white flex flex-col hover:border-[#c084fc] hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-10 h-10 rounded-xl bg-[#f3e8ff] flex items-center justify-center shrink-0">
+                                            <FlaskConical className="w-5 h-5 text-[#9333ea]" />
+                                        </div>
+                                        <h4 className="font-bold text-[#111827] text-base">Chemical Methods</h4>
                                     </div>
-                                    <h4 className="font-bold text-[#111827] text-base">Chemical Control</h4>
+                                    <ul className="space-y-4 flex-1 mb-6">
+                                        {result.chemical_control.map((cmd, idx) => (
+                                            <li key={idx} className="flex items-start text-sm text-[#4b5563]">
+                                                <Check className="w-4 h-4 text-[#9333ea] mr-2 shrink-0 mt-0.5" strokeWidth={3} />
+                                                <span className="leading-snug">{cmd}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        onClick={() => triggerToast("Searching local registry for chemical suppliers...")}
+                                        className="w-full py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                        Find Suppliers
+                                    </button>
                                 </div>
-                                <ul className="space-y-4 flex-1 mb-6">
-                                    {result.chemicalControl.map((cmd, idx) => (
-                                        <li key={idx} className="flex items-start text-sm text-[#4b5563]">
-                                            <Check className="w-4 h-4 text-[#9333ea] mr-2 shrink-0 mt-0.5" strokeWidth={3} />
-                                            <span className="leading-snug">{cmd}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button
-                                    onClick={() => triggerToast("Searching local registry for chemical suppliers...")}
-                                    className="w-full py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                                >
-                                    Find Suppliers
-                                </button>
-                            </div>
 
-                            {/* Organic Control */}
-                            <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white flex flex-col hover:border-[#34d399] hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-                                        <Sprout className="w-5 h-5 text-[#10b981]" />
+                                {/* Organic Control */}
+                                <div className="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white flex flex-col hover:border-[#34d399] hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
+                                            <Sprout className="w-5 h-5 text-[#10b981]" />
+                                        </div>
+                                        <h4 className="font-bold text-[#111827] text-base">Cultural / Organic Methods</h4>
                                     </div>
-                                    <h4 className="font-bold text-[#111827] text-base">Organic Control</h4>
+                                    <ul className="space-y-4 flex-1 mb-6">
+                                        {result.cultural_control.map((cmd, idx) => (
+                                            <li key={idx} className="flex items-start text-sm text-[#4b5563]">
+                                                <Check className="w-4 h-4 text-[#10b981] mr-2 shrink-0 mt-0.5" strokeWidth={3} />
+                                                <span className="leading-snug">{cmd}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        onClick={() => triggerToast("Loading organic control documentation...")}
+                                        className="w-full py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                        View Guide
+                                    </button>
                                 </div>
-                                <ul className="space-y-4 flex-1 mb-6">
-                                    {result.organicControl.map((cmd, idx) => (
-                                        <li key={idx} className="flex items-start text-sm text-[#4b5563]">
-                                            <Check className="w-4 h-4 text-[#10b981] mr-2 shrink-0 mt-0.5" strokeWidth={3} />
-                                            <span className="leading-snug">{cmd}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button
-                                    onClick={() => triggerToast("Loading organic control documentation...")}
-                                    className="w-full py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                                >
-                                    View Guide
-                                </button>
-                            </div>
 
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="bg-[#ecfdf5] border-2 border-[#10b981] rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg">
+                                <div className="w-16 h-16 bg-[#10b981] rounded-full flex items-center justify-center mb-4">
+                                    <CheckCircle2 className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-2xl font-black text-[#065f46] mb-2">Crop appears healthy!</h3>
+                                <p className="text-[#047857] font-medium max-w-md">
+                                    No immediate action required. Maintain normal watering and fertilization schedule to keep the {cropType} thriving.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -8,11 +8,14 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
+    "electron-squirrel-startup": "^1.0.1",
     "onnxruntime-node": "^1.24.2",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/electron": "^1.4.38",
     "@types/node": "^25.3.2",
     "electron": "^40.6.1",
     "ts-node": "^10.9.2",

@@ -1,34 +1,32 @@
-export interface ScanResult {
-    id: string;
-    diseaseName: string;
-    scientificName: string;
-    severity: number;
-    symptoms: string[];
-    chemicalControl: string[];
-    organicControl: string[];
-}
+import type { DiagnosisResult } from '../types';
 
-export const analyzeImage = async (file: File, cropType: string): Promise<ScanResult> => {
-    return new Promise((resolve) => {
-        // Simulate a 3-second delay for inference
-        setTimeout(() => {
-            resolve({
-                id: `CHM-${Math.floor(Math.random() * 10000)}`,
-                diseaseName: cropType === "tomato" ? "Late Blight" : "Leaf Spot",
-                scientificName: cropType === "tomato" ? "Phytophthora infestans" : "Cercospora sp.",
-                severity: 85,
-                symptoms: ["Water-soaked spots", "Necrotic lesions", "White fungal growth"],
-                chemicalControl: [
-                    "Apply fungicides containing mefenoxam",
-                    "Use copper-based sprays",
-                    "Repeat every 5-7 days"
-                ],
-                organicControl: [
-                    "Remove infected leaves",
-                    "Apply Neem Oil",
-                    "Ensure proper spacing"
-                ]
-            });
-        }, 3000);
-    });
+export const analyzeImage = async (file: File & { path?: string }, cropType: string): Promise<DiagnosisResult> => {
+    try {
+        // Ensure we are in an Electron environment and the file path exists
+        if (!window.api) {
+            throw new Error("Electron API bridge is not available. Please run the desktop app.");
+        }
+
+        if (!file.path) {
+            throw new Error("Local file path not available required for Electron processing.");
+        }
+
+        const result = await window.api.diagnoseImage(file.path, cropType) as DiagnosisResult;
+        return result;
+
+    } catch (e) {
+        console.error("Analysis Error:", e);
+        throw e;
+    }
+};
+
+export const getScanHistory = async (): Promise<any[]> => {
+    try {
+        if (!window.api) return [];
+        const result = await window.api.getHistory();
+        return result;
+    } catch (e) {
+        console.error("History Error:", e);
+        return [];
+    }
 };

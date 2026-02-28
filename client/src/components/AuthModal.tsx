@@ -8,6 +8,8 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
     const [tab, setTab] = useState<'login' | 'signup'>('login');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,8 +49,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                                 <input
                                     type="email"
                                     required
-                                    defaultValue="[EMAIL_ADDRESS]"
-                                    placeholder="Enter your email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email address"
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
                                 />
                             </div>
@@ -60,8 +63,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                                 <input
                                     type="password"
                                     required
-                                    defaultValue="[PASSWORD]"
-                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Create a secure password"
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
                                 />
                             </div>
