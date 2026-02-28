@@ -128,7 +128,7 @@ User → Frontend → Backend → Model → Database → Response
 
 - Live Demo Link:
 - Demo Video Link:
-- GitHub Repository:
+- GitHub Repository: https://github.com/Vegapunk-debug/crop-disease-identifier
 
 ---
 
@@ -145,6 +145,12 @@ User → Frontend → Backend → Model → Database → Response
 
 | Member Name | Role | Responsibilities |
 |-------------|------|-----------------|
+Rohit Nair P
+Angelo Nelson
+Nandan S Acharya
+
+
+
 
 ---
 
