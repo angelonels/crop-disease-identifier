@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { InputView } from './views/InputView';
 import { ProcessingView } from './views/ProcessingView';
@@ -9,8 +9,7 @@ import { SpeciesLibraryView } from './views/SpeciesLibraryView';
 import { Toast } from './components/Toast';
 import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
-import { analyzeImage } from './services/api';
-import type { ScanResult } from './services/api';
+import type { DiagnosisResult } from './types';
 
 type ViewState = 'input' | 'processing' | 'results' | 'dashboard' | 'history' | 'library';
 
@@ -28,29 +27,16 @@ function App() {
   const triggerToast = (message: string) => setToastMessage(message);
 
   // Diagnostic State
-  const [selectedCrop, setSelectedCrop] = useState<string>('tomato');
+  const [selectedCrop, setSelectedCrop] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [scanStatus, setScanStatus] = useState<'idle' | 'processing' | 'complete'>('idle');
-  const [scanResults, setScanResults] = useState<ScanResult | null>(null);
+  const [scanResults, setScanResults] = useState<DiagnosisResult | null>(null);
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = (file: File) => {
     setUploadedFile(file);
     setScanStatus('processing');
     setView('processing');
-
-    try {
-      // Simulate ONNX Inference
-      const result = await analyzeImage(file, selectedCrop);
-      setScanResults(result);
-      setScanStatus('complete');
-      setView('results');
-      triggerToast("Analysis complete. Results loaded successfully.");
-    } catch (error) {
-      console.error("Inference failed", error);
-      setScanStatus('idle');
-      setView('input');
-      triggerToast("Analysis failed. Please try again.");
-    }
+    // Inference happens inside <ProcessingView> now
   };
 
   const handleNavigate = (newView: string) => {
@@ -94,14 +80,15 @@ function App() {
   };
 
   const handleViewMockResult = (crop: string, diseaseName: string, severity: number) => {
-    const mockRes: ScanResult = {
+    const mockRes: DiagnosisResult = {
       id: "CHM-HISTORY",
       diseaseName: diseaseName,
       scientificName: crop === 'Tomato' ? 'Solanum lycopersicum' : crop === 'Potato' ? 'Solanum tuberosum' : 'Capsicum annuum',
-      severity: severity,
+      confidence: severity,
       symptoms: ["Historical scan artifact"],
-      chemicalControl: ["Historical dataset record"],
-      organicControl: ["Historical dataset record"]
+      chemical_control: ["Historical dataset record"],
+      cultural_control: ["Historical dataset record"],
+      isHealthy: false
     };
     setSelectedCrop(crop.toLowerCase().replace(' ', ''));
     setScanResults(mockRes);
@@ -134,7 +121,21 @@ function App() {
           />
         )}
         {view === 'processing' && uploadedFile && (
-          <ProcessingView file={uploadedFile} triggerToast={triggerToast} />
+          <ProcessingView
+            file={uploadedFile}
+            cropType={selectedCrop}
+            onComplete={(res) => {
+              setScanResults(res);
+              setScanStatus('complete');
+              setView('results');
+              triggerToast("Analysis complete. Results loaded successfully.");
+            }}
+            triggerToast={triggerToast}
+            onBack={() => {
+              setScanStatus('idle');
+              setView('input');
+            }}
+          />
         )}
         {view === 'results' && scanResults && uploadedFile && (
           <ResultsView

@@ -24,19 +24,34 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            onUpload(e.target.files[0]);
+            const rawFile = e.target.files[0];
+            // In Electron, the file input captures the local path. We just pass the File object.
+            onUpload(rawFile);
         }
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        if (!selectedSpecies) {
+            triggerToast("Please select a crop species first.");
+            return;
+        }
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            onUpload(e.dataTransfer.files[0]);
+            const rawFile = e.dataTransfer.files[0];
+            onUpload(rawFile);
         }
     };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+    };
+
+    const handleContainerClick = () => {
+        if (!selectedSpecies) {
+            triggerToast("Please select a crop species first.");
+            return;
+        }
+        fileInputRef.current?.click();
     };
 
     return (
@@ -89,13 +104,13 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
                         {/* Species Selection */}
                         <div className="p-8 border-b border-gray-100">
                             <h3 className="text-[11px] font-bold text-gray-500 tracking-widest uppercase mb-4">Select Species</h3>
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
 
                                 {/* Tomato */}
                                 <button
                                     onClick={() => onSpeciesChange('tomato')}
-                                    className={`flex items-center px-4 py-3 rounded-xl border transition-all ${selectedSpecies === 'tomato'
-                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-white'
+                                    className={`flex items-center px-4 py-3 min-w-[140px] min-h-[4rem] rounded-xl border transition-all ${selectedSpecies === 'tomato'
+                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-emerald-50/20'
                                         : 'border-gray-200 hover:border-gray-300 bg-white'
                                         }`}
                                 >
@@ -105,12 +120,26 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
                                     <span className={`font-bold text-[15px] ${selectedSpecies === 'tomato' ? 'text-gray-900' : 'text-gray-700'}`}>Tomato</span>
                                 </button>
 
+                                {/* Apple */}
+                                <button
+                                    onClick={() => onSpeciesChange('apple')}
+                                    className={`flex items-center px-4 py-3 min-w-[140px] min-h-[4rem] rounded-xl border transition-all ${selectedSpecies === 'apple'
+                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-emerald-50/20'
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                                        }`}
+                                >
+                                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center mr-4">
+                                        <Apple className="w-4 h-4 text-red-600" />
+                                    </div>
+                                    <span className={`font-bold text-[15px] ${selectedSpecies === 'apple' ? 'text-gray-900' : 'text-gray-700'}`}>Apple</span>
+                                </button>
+
                                 {/* Potato */}
                                 <button
                                     onClick={() => onSpeciesChange('potato')}
-                                    className={`flex items-center px-4 py-3 min-w-[140px] rounded-xl border transition-all ${selectedSpecies === 'potato'
-                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-white'
-                                        : 'border-gray-100 bg-white hover:border-gray-200'
+                                    className={`flex items-center px-4 py-3 min-w-[140px] min-h-[4rem] rounded-xl border transition-all ${selectedSpecies === 'potato'
+                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-emerald-50/20'
+                                        : 'border-gray-200 bg-white hover:border-gray-300'
                                         }`}
                                 >
                                     <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mr-4">
@@ -121,16 +150,16 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
 
                                 {/* Bell Pepper */}
                                 <button
-                                    onClick={() => onSpeciesChange('pepper')}
-                                    className={`flex items-center px-4 py-3 min-w-[140px] rounded-xl border transition-all ${selectedSpecies === 'pepper'
-                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-white'
-                                        : 'border-gray-100 bg-white hover:border-gray-200'
+                                    onClick={() => onSpeciesChange('pepper,_bell')}
+                                    className={`flex items-center px-4 py-3 min-w-[140px] min-h-[4rem] rounded-xl border transition-all ${selectedSpecies === 'pepper,_bell'
+                                        ? 'border-[#0b9c71] shadow-[0_0_0_1px_rgba(11,156,113,1)] bg-emerald-50/20'
+                                        : 'border-gray-200 bg-white hover:border-gray-300'
                                         }`}
                                 >
                                     <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center mr-4">
                                         <Sprout className="w-4 h-4 text-emerald-600" />
                                     </div>
-                                    <span className={`font-bold text-[15px] ${selectedSpecies === 'pepper' ? 'text-gray-900' : 'text-gray-700'}`}>Bell Pepper</span>
+                                    <span className={`font-bold text-[15px] ${selectedSpecies === 'pepper,_bell' ? 'text-gray-900' : 'text-gray-700'}`}>Bell Pepper</span>
                                 </button>
 
                             </div>
@@ -141,8 +170,11 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
                             <div
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-[80%] border-2 border-dashed border-gray-200 rounded-2xl bg-white flex flex-col items-center justify-center min-h-[340px] cursor-pointer hover:bg-gray-50/50 hover:border-gray-300 transition-colors relative"
+                                onClick={handleContainerClick}
+                                className={`w-[80%] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center min-h-[340px] transition-all relative ${selectedSpecies
+                                    ? "bg-white border-gray-200 hover:bg-gray-50/50 hover:border-gray-300 cursor-pointer"
+                                    : "bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed"
+                                    }`}
                             >
                                 <input
                                     type="file"
@@ -150,16 +182,20 @@ export const InputView: React.FC<InputViewProps> = ({ selectedSpecies, onSpecies
                                     className="hidden"
                                     ref={fileInputRef}
                                     onChange={handleFileChange}
+                                    disabled={!selectedSpecies}
                                 />
                                 <div className="w-16 h-16 bg-[#eef2f9] rounded-full flex items-center justify-center mb-6 pointer-events-none">
                                     <UploadCloud className="w-7 h-7 text-[#738ab8]" strokeWidth={2.5} />
                                 </div>
-                                <h4 className="text-[17px] font-bold text-gray-900 mb-2 pointer-events-none">Click or drag image here</h4>
+                                <h4 className="text-[17px] font-bold text-gray-900 mb-2 pointer-events-none">
+                                    {selectedSpecies ? "Click or drag image here" : "Please select a crop species first"}
+                                </h4>
                                 <p className="text-gray-500 text-sm mb-8 font-medium pointer-events-none">Supported formats: JPEG, PNG (Max 10MB)</p>
 
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                                    className="flex items-center px-5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm z-10"
+                                    onClick={(e) => { e.stopPropagation(); handleContainerClick(); }}
+                                    disabled={!selectedSpecies}
+                                    className="flex items-center px-5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <FolderOpen className="w-4 h-4 mr-2" />
                                     Browse Files

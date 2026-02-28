@@ -1,19 +1,40 @@
 import React from 'react';
 import { Search, Filter, FileText } from 'lucide-react';
 
+import { getScanHistory } from '../services/api';
+
 interface HistoryViewProps {
     triggerToast: (msg: string) => void;
     onViewResult: (crop: string, diseaseName: string, severity: number) => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({ triggerToast, onViewResult }) => {
-    const scans = [
-        { id: '#CHM-2023-892', date: 'Oct 24, 2026', time: '14:30', crop: 'Tomato', disease: 'Late Blight', severity: 'High', color: 'red' },
-        { id: '#CHM-2023-891', date: 'Oct 24, 2026', time: '09:15', crop: 'Potato', disease: 'Healthy', severity: 'None', color: 'emerald' },
-        { id: '#CHM-2023-890', date: 'Oct 23, 2026', time: '16:45', crop: 'Bell Pepper', disease: 'Powdery Mildew', severity: 'Medium', color: 'amber' },
-        { id: '#CHM-2023-889', date: 'Oct 21, 2026', time: '11:20', crop: 'Tomato', disease: 'Leaf spot', severity: 'Low', color: 'blue' },
-        { id: '#CHM-2023-888', date: 'Oct 20, 2026', time: '15:05', crop: 'Potato', disease: 'Healthy', severity: 'None', color: 'emerald' },
-    ];
+    const [scans, setScans] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        let mounted = true;
+
+        async function loadHistory() {
+            try {
+                const data = await getScanHistory();
+                if (mounted) {
+                    setScans(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch history", error);
+                if (mounted) triggerToast("Failed to load scan history");
+            } finally {
+                if (mounted) setIsLoading(false);
+            }
+        }
+
+        loadHistory();
+
+        return () => {
+            mounted = false;
+        };
+    }, [triggerToast]);
 
     return (
         <div className="flex-1 flex flex-col h-screen bg-[#fafbfc] overflow-hidden">
@@ -54,7 +75,19 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ triggerToast, onViewRe
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {scans.map((scan) => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm font-medium">
+                                        Loading scan history...
+                                    </td>
+                                </tr>
+                            ) : scans.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm font-medium">
+                                        No recent scans found. Start a new diagnosis from the Dashboard!
+                                    </td>
+                                </tr>
+                            ) : scans.map((scan) => (
                                 <tr
                                     key={scan.id}
                                     onClick={() => onViewResult(scan.crop, scan.disease, scan.severity === 'High' ? 85 : scan.severity === 'Medium' ? 50 : 5)}

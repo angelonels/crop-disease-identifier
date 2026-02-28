@@ -11,17 +11,59 @@ import {
 
 interface ProcessingViewProps {
     file: File;
+    cropType: string;
+    onComplete: (result: any) => void;
     triggerToast: (msg: string) => void;
+    onBack: () => void;
 }
 
-export const ProcessingView: React.FC<ProcessingViewProps> = ({ file, triggerToast }) => {
+export const ProcessingView: React.FC<ProcessingViewProps> = ({ file, cropType, onComplete, triggerToast, onBack }) => {
     const [previewUrl, setPreviewUrl] = useState<string>('');
+    const [progress, setProgress] = useState<number>(0);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     useEffect(() => {
         const objectUrl = URL.createObjectURL(file);
         setPreviewUrl(objectUrl);
         return () => URL.revokeObjectURL(objectUrl);
     }, [file]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        // Simulate progress bar filling up
+        const interval = setInterval(() => {
+            setProgress(p => {
+                if (p >= 95) {
+                    clearInterval(interval);
+                    return 95;
+                }
+                return p + 5;
+            });
+        }, 150);
+
+        // Perform actual inference
+        window.api.diagnoseImage((file as any).path, cropType)
+            .then(res => {
+                if (!isMounted) return;
+                setProgress(100);
+                setTimeout(() => {
+                    onComplete(res);
+                }, 500); // slight delay to show 100%
+            })
+            .catch(err => {
+                if (!isMounted) return;
+                clearInterval(interval);
+                console.error("Diagnosis Error:", err);
+                setErrorMsg(err.message || "Failed to analyze image. Please try again.");
+                triggerToast(err.message || "Failed to analyze image.");
+            });
+
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [file, cropType]);
 
     return (
         <div className="flex-1 flex flex-col h-screen bg-[#fafbfc]">
@@ -52,7 +94,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ file, triggerToa
                     <div className="mb-8">
                         <div className="flex items-center text-[#1db37f] text-[10px] font-bold uppercase tracking-widest mb-3">
                             <RefreshCcw className="w-3.5 h-3.5 mr-2 animate-spin-slow" />
-                            Processing Image
+                            Scanning...
                         </div>
                         <h2 className="text-[28px] font-extrabold text-[#111827] mb-2 tracking-tight">Analyzing Crop Sample</h2>
                         <p className="text-gray-500 text-[15px] max-w-2xl leading-relaxed">
@@ -69,6 +111,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ file, triggerToa
                                 alt="Scanning Leaf"
                             />
                         )}
+
+                        {/* Pulsing Overlay */}
+                        <div className="absolute inset-0 bg-[#0b9c71]/20 animate-pulse pointer-events-none" />
 
                         {/* Outline Targets */}
                         <div className="absolute top-6 left-6 w-10 h-10 border-t-2 border-l-2 border-white/60 rounded-tl-[4px]" />
@@ -113,46 +158,65 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ file, triggerToa
                                         <Hexagon className="w-5 h-5 text-emerald-600 fill-emerald-600" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <h4 className="text-gray-900 font-extrabold text-[15px]">Running local ONNX inference...</h4>
+                                        <h4 className="text-gray-900 font-extrabold text-[15px]">{errorMsg ? 'Analysis Failed' : 'Running local ONNX inference...'}</h4>
                                         <p className="text-gray-400 text-xs font-medium mt-0.5">Model: ResNet-50-CropDisease-v4</p>
                                     </div>
                                 </div>
-                                <div className="text-emerald-600 font-black text-lg">45%</div>
+                                <div className="text-emerald-600 font-black text-lg">{progress}%</div>
                             </div>
                             <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0b9c71] rounded-full w-[45%]" />
+                                <div className="h-full bg-[#0b9c71] rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
 
                         <div className="flex flex-wrap gap-4 px-6 pb-6">
-                            {/* Step 1 */}
-                            <div className="flex-1 min-w-[200px] bg-[#f0fdf4] border border-[#d1fae5] rounded-xl p-4 flex items-start gap-4">
-                                <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
-                                    <CheckCircle2 className="w-4 h-4 text-white" />
+                            {errorMsg ? (
+                                <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                                    <p className="font-bold text-red-700 text-sm mb-2">{errorMsg}</p>
+                                    <button onClick={onBack} className="px-4 py-2 bg-red-100 text-red-800 rounded-md text-xs font-bold hover:bg-red-200 transition">Try Again</button>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-0.5">Step 1</p>
-                                    <p className="font-bold text-gray-900 text-sm">Image Preprocessing</p>
-                                </div>
-                            </div>
+                            ) : (
+                                <>
+                                    {/* Step 1 */}
+                                    <div className="flex-1 min-w-[200px] bg-[#f0fdf4] border border-[#d1fae5] rounded-xl p-4 flex items-start gap-4">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
+                                            <CheckCircle2 className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-0.5">Step 1</p>
+                                            <p className="font-bold text-gray-900 text-sm">Image Preprocessing</p>
+                                        </div>
+                                    </div>
 
-                            {/* Step 2 */}
-                            <div className="flex-1 min-w-[200px] bg-[#f0fdf4] border border-[#d1fae5] rounded-xl p-4 flex items-start gap-4 shadow-sm">
-                                <RefreshCcw className="w-6 h-6 text-emerald-600 shrink-0 animate-spin-slow" />
-                                <div>
-                                    <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-0.5">Step 2</p>
-                                    <p className="font-bold text-gray-900 text-sm">Feature Extraction</p>
-                                </div>
-                            </div>
+                                    {/* Step 2 */}
+                                    <div className={`flex-1 min-w-[200px] rounded-xl p-4 flex items-start gap-4 shadow-sm ${progress > 50 ? 'bg-[#f0fdf4] border border-[#d1fae5]' : 'bg-white border border-gray-100'}`}>
+                                        {progress > 50 ? (
+                                            <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
+                                                <CheckCircle2 className="w-4 h-4 text-white" />
+                                            </div>
+                                        ) : (
+                                            <RefreshCcw className="w-6 h-6 text-emerald-600 shrink-0 animate-spin-slow" />
+                                        )}
+                                        <div>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${progress > 50 ? 'text-emerald-700' : 'text-gray-400'}`}>Step 2</p>
+                                            <p className="font-bold text-gray-900 text-sm">Feature Extraction</p>
+                                        </div>
+                                    </div>
 
-                            {/* Step 3 */}
-                            <div className="flex-1 min-w-[200px] border border-gray-100 bg-white rounded-xl p-4 flex items-start gap-4 opacity-50">
-                                <Circle className="w-6 h-6 text-gray-300 shrink-0" strokeWidth={2} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Step 3</p>
-                                    <p className="font-bold text-gray-500 text-sm">Disease Classification</p>
-                                </div>
-                            </div>
+                                    {/* Step 3 */}
+                                    <div className={`flex-1 min-w-[200px] rounded-xl p-4 flex items-start gap-4 ${progress > 90 ? 'bg-[#f0fdf4] border border-[#d1fae5] shadow-sm' : 'border border-gray-100 bg-white opacity-50'}`}>
+                                        {progress > 90 ? (
+                                            <RefreshCcw className="w-6 h-6 text-emerald-600 shrink-0 animate-spin-slow" />
+                                        ) : (
+                                            <Circle className="w-6 h-6 text-gray-300 shrink-0" strokeWidth={2} />
+                                        )}
+                                        <div>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${progress > 90 ? 'text-emerald-700' : 'text-gray-400'}`}>Step 3</p>
+                                            <p className={`font-bold text-sm ${progress > 90 ? 'text-gray-900' : 'text-gray-500'}`}>Disease Classification</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                     </div>
