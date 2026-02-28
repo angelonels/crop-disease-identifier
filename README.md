@@ -6,7 +6,7 @@
 ## 1. Problem Statement
 
 ### Problem Title
-## Crop Disease Identifier from Leaf Images
+#### Crop Disease Identifier from Leaf Images
 
 ### Problem Description
 Crop diseases cause significant reductions in agricultural productivity and farmer income. While early detection is critical to preventing large-scale damage, farmers currently lack accessible, offline, and real-time diagnostic tools. This project aims to build an on-device, camera-based machine learning system that operates fully offline to identify crop diseases from leaf photographs, estimate severity levels, and provide actionable treatment recommendations directly at the point of need.
